@@ -1,0 +1,28 @@
+# Java compiled files
+*.class
+*.log
+
+# IDE files
+.idea/
+.vscode/
+.settings/
+
+# Build output
+/target/
+/bin/
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local database export
+bus_booking_full_export.sql
+
+# OS files
+.DS_Store
+Thumbs.db
+
+src/main/Backup/

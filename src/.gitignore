@@ -1,0 +1,25 @@
+# Compiled Java files
+*.class
+
+# Log files
+*.log
+
+# Secrets and local exports
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+
+# IDE files
+.idea/
+.vscode/
+
+# Build outputs
+target/
+build/
+bin/
+
+# OS files
+.DS_Store

@@ -1,0 +1,469 @@
+/* =====================================================
+   TN BUS BOOKING SYSTEM
+   SESSION 4 - ADVANCED DATE-WISE BUS AVAILABILITY
+===================================================== */
+
+
+/* =====================================================
+   AVAILABLE BUS COUNT
+===================================================== */
+
+.session4-count-banner {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    margin-top: 18px;
+
+    padding: 12px 20px;
+
+    border-radius: 12px;
+
+    background: #eaf7ef;
+
+    border: 1px solid #c8ead5;
+
+    color: #166534;
+
+}
+
+.session4-count-banner strong {
+
+    font-size: 26px;
+
+    font-weight: 800;
+
+}
+
+.session4-count-banner span {
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+}
+
+
+/* =====================================================
+   DATE AVAILABILITY SECTION
+===================================================== */
+
+.date-availability-section {
+
+    background: var(--white, #ffffff);
+
+    border: 1px solid var(--border, #e0e6ee);
+
+    border-radius: 18px;
+
+    padding: 26px;
+
+    margin: 28px 0;
+
+}
+
+.date-calendar-heading {
+
+    margin-bottom: 22px;
+
+}
+
+.date-calendar-heading h2 {
+
+    font-size: 23px;
+
+    color: var(--text, #18283b);
+
+    margin: 8px 0;
+
+}
+
+.date-calendar-heading p {
+
+    font-size: 14px;
+
+    color: var(--muted, #66758a);
+
+}
+
+
+/* =====================================================
+   CALENDAR LAYOUT
+===================================================== */
+
+.date-calendar-layout {
+
+    display: flex;
+
+    align-items: stretch;
+
+    gap: 10px;
+
+}
+
+.calendar-nav {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex: 0 0 40px;
+
+    border-radius: 12px;
+
+    border: 1px solid var(--border, #e0e6ee);
+
+    background: #ffffff;
+
+    color: var(--primary, #12355b);
+
+    text-decoration: none;
+
+    font-size: 22px;
+
+    font-weight: bold;
+
+    transition: background 0.2s ease,
+                color 0.2s ease;
+
+}
+
+.calendar-nav:hover {
+
+    background: var(--primary, #12355b);
+
+    color: #ffffff;
+
+}
+
+.calendar-disabled {
+
+    opacity: 0.35;
+
+    cursor: not-allowed;
+
+    pointer-events: none;
+
+}
+
+
+/* =====================================================
+   SEVEN-DAY CALENDAR GRID
+===================================================== */
+
+.date-calendar-grid {
+
+    display: grid;
+
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+
+    gap: 10px;
+
+    flex: 1;
+
+    min-width: 0;
+
+}
+
+.date-calendar-card {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 9px;
+
+    min-height: 116px;
+
+    padding: 12px 6px;
+
+    border-radius: 12px;
+
+    border: 1px solid var(--border, #e0e6ee);
+
+    background: #f8fafc;
+
+    text-align: center;
+
+    text-decoration: none;
+
+    color: var(--text, #18283b);
+
+    transition: background 0.2s ease,
+                border-color 0.2s ease,
+                transform 0.2s ease;
+
+}
+
+.date-calendar-card:hover {
+
+    background: #edf4fb;
+
+    border-color: var(--primary, #12355b);
+
+    transform: translateY(-2px);
+
+}
+
+.date-calendar-card.active {
+
+    background: #eaf2fa;
+
+    border: 2px solid var(--primary, #12355b);
+
+}
+
+.calendar-day {
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    color: var(--muted, #66758a);
+
+    text-transform: uppercase;
+
+}
+
+.calendar-date {
+
+    font-size: 17px;
+
+    font-weight: 800;
+
+    color: var(--text, #18283b);
+
+}
+
+.calendar-bus-count {
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    color: #16804a;
+
+}
+
+.calendar-bus-count.no-buses {
+
+    color: #c24141;
+
+}
+
+.calendar-note {
+
+    margin-top: 16px;
+
+    font-size: 12px;
+
+    line-height: 1.6;
+
+    color: var(--muted, #66758a);
+
+}
+
+
+/* =====================================================
+   BUS RESULTS HEADING
+===================================================== */
+
+.bus-results-section {
+
+    margin-top: 30px;
+
+}
+
+.results-section-heading {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 16px;
+
+    margin-bottom: 22px;
+
+}
+
+.results-section-heading h2 {
+
+    font-size: 22px;
+
+    color: var(--text, #18283b);
+
+}
+
+.results-section-heading span {
+
+    font-size: 14px;
+
+    color: var(--muted, #66758a);
+
+}
+
+
+/* =====================================================
+   SOLD OUT BADGE
+===================================================== */
+
+.session4-soldout-badge {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 8px 12px;
+
+    border-radius: 8px;
+
+    background: #fee2e2;
+
+    color: #b91c1c;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+}
+
+
+/* =====================================================
+   TABLET RESPONSIVENESS
+===================================================== */
+
+@media (max-width: 900px) {
+
+    .date-calendar-grid {
+
+        gap: 6px;
+
+    }
+
+    .date-calendar-card {
+
+        min-height: 104px;
+
+        padding: 10px 4px;
+
+    }
+
+    .calendar-date {
+
+        font-size: 14px;
+
+    }
+
+    .calendar-bus-count {
+
+        font-size: 11px;
+
+    }
+
+}
+
+
+/* =====================================================
+   MOBILE RESPONSIVENESS
+===================================================== */
+
+@media (max-width: 600px) {
+
+    .date-availability-section {
+
+        padding: 16px 12px;
+
+    }
+
+    .date-calendar-heading h2 {
+
+        font-size: 19px;
+
+    }
+
+    .date-calendar-layout {
+
+        gap: 6px;
+
+    }
+
+    .calendar-nav {
+
+        flex-basis: 30px;
+
+        font-size: 17px;
+
+    }
+
+    .date-calendar-grid {
+
+        display: flex;
+
+        overflow-x: auto;
+
+        gap: 8px;
+
+        padding-bottom: 10px;
+
+        scroll-snap-type: x mandatory;
+
+    }
+
+    .date-calendar-card {
+
+        flex: 0 0 88px;
+
+        min-width: 88px;
+
+        min-height: 100px;
+
+        scroll-snap-align: start;
+
+    }
+
+    .results-section-heading {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+    }
+
+    .results-section-heading h2 {
+
+        font-size: 18px;
+
+    }
+
+    .session4-count-banner {
+
+        padding: 10px 14px;
+
+    }
+
+    .session4-count-banner strong {
+
+        font-size: 22px;
+
+    }
+
+    .session4-count-banner span {
+
+        font-size: 12px;
+
+    }
+
+}
