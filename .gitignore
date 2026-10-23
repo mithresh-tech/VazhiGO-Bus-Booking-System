@@ -26,3 +26,18 @@ bus_booking_full_export.sql
 Thumbs.db
 
 src/main/Backup/
+
+
+# Local project files and backups
+/.classpath
+/.project
+/Booked Tickets/
+/Bus Image/
+/Session5_Fixed_Files.zip
+/Session6_1_Bus_Cards.zip
+/Session6_1_Bus_Cards/
+/Session6_2_Corrected_Complete.zip
+/Session6_2_Corrected_Complete/
+/Session6_2_Seat_Selection.zip
+/Session6_2_Seat_Selection/
+/tatus

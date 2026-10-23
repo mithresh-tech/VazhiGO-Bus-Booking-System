@@ -1,1 +1,128 @@
 @charset "UTF-8";
+
+
+/* VazhiGO Cinematic Intro */
+.vg-intro {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: linear-gradient(135deg, #07152e, #123e65, #07152e);
+    color: #ffffff;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+
+.vg-intro.vg-hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.vg-intro-content {
+    position: relative;
+    z-index: 2;
+    width: min(90%, 700px);
+    padding: 40px 20px;
+    text-align: center;
+    animation: vg-appear 1s ease both;
+}
+
+.vg-skip {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    z-index: 5;
+    padding: 10px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 24px;
+    background: rgba(0, 0, 0, 0.25);
+    color: #ffffff;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.vg-skip:hover {
+    background: #ffffff;
+    color: #07152e;
+}
+
+.vg-intro-kicker {
+    margin-bottom: 18px;
+    color: #72e4ff;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+}
+
+.vg-intro-bus {
+    display: block;
+    width: min(220px, 60%);
+    height: auto;
+    max-height: 150px;
+    object-fit: contain;
+    margin: 0 auto 20px;
+}
+
+.vg-intro-logo {
+    margin: 0;
+    font-size: clamp(42px, 8vw, 76px);
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.vg-intro-tagline {
+    margin-top: 14px;
+    color: #d6eaff;
+    font-size: clamp(16px, 3vw, 22px);
+}
+
+.vg-intro-road {
+    width: min(320px, 80%);
+    height: 4px;
+    margin: 32px auto 0;
+    border-radius: 10px;
+    background: linear-gradient(90deg, transparent, #72e4ff, #ffffff, transparent);
+    animation: vg-road 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes vg-appear {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes vg-road {
+    from {
+        opacity: 0.35;
+        transform: scaleX(0.65);
+    }
+    to {
+        opacity: 1;
+        transform: scaleX(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .vg-intro-content,
+    .vg-intro-road {
+        animation: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .vg-skip {
+        top: 14px;
+        left: 14px;
+    }
+}

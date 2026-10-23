@@ -582,9 +582,8 @@ select {
         </div>
 
         <img class="vg-intro-bus"
-             src="<%= ctx %>/assets/images/vazhigo-luxury-bus.png"
-             alt="VazhiGo luxury bus"
-             onerror="this.style.display='none'">
+     src="<%= ctx %>/assets/images/buses/bus-exterior.jpg"
+     alt="VazhiGO Bus">
 
         <h1 class="vg-intro-logo">
             Vazhi<span>Go.</span>
