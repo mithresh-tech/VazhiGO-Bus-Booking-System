@@ -41,3 +41,17 @@ src/main/Backup/
 /Session6_2_Seat_Selection.zip
 /Session6_2_Seat_Selection/
 /tatus
+
+# Local SQL files and exports
+/Bus_Booking_Queries_Merged.sql
+/Bus_Booking_SQL_Structured.sql
+/session_4_1_safe_migration.sql
+/vazhigo_local_backup.sql
+/status
+
+# Local SQL files and exports
+/Bus_Booking_Queries_Merged.sql
+/Bus_Booking_SQL_Structured.sql
+/session_4_1_safe_migration.sql
+/vazhigo_local_backup.sql
+/status
