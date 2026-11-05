@@ -1533,3 +1533,260 @@ UNION ALL SELECT 'seats', COUNT(*) FROM seat
 UNION ALL SELECT 'bookings', COUNT(*) FROM booking
 UNION ALL SELECT 'passengers', COUNT(*) FROM booking_passenger
 UNION ALL SELECT 'payments', COUNT(*) FROM payment;
+
+-- =========================================================
+-- MERGED FILE BOUNDARY: session_4_1_safe_migration.sql
+-- Original contents below are appended without changing SQL/data values.
+-- =========================================================
+
+-- =========================================================
+-- SECTION 7: SESSION 4.1 DEMO FLEET MIGRATION
+-- =========================================================
+-- SESSION 4.1 | Tamil Nadu fictional demonstration schedules using real-world operator labels
+-- Run ONLY against the supplied bus_booking_db schema, AFTER taking a full MySQL Workbench Data Export backup.
+-- Does not delete old buses, seats, schedules, bookings or passengers.
+-- Intended for a DEVELOPMENT/DEMO database only; no affiliation or live operator inventory.
+USE bus_booking_db;
+
+-- Validate expected city IDs before running the transaction below:
+SELECT city_id, city_name FROM city WHERE city_id IN (11,12,58,69,97,141,147) ORDER BY city_id;
+-- Expected: 11 Chennai, 12 Coimbatore, 58 Madurai, 69 Nagercoil,
+--           97 Salem, 141 Tiruchirappalli, 147 Tirunelveli.
+
+DROP TEMPORARY TABLE IF EXISTS demo_routes;
+CREATE TEMPORARY TABLE demo_routes (
+ route_code INT PRIMARY KEY, source_id INT NOT NULL, destination_id INT NOT NULL,
+ target_count INT NOT NULL, base_fare DECIMAL(10,2) NOT NULL,
+ travel_hours INT NOT NULL
+);
+INSERT INTO demo_routes VALUES
+(1,11,12,12,750,9),(2,11,58,10,650,8),(3,11,141,8,420,6),
+(4,11,97,8,390,6),(5,11,147,8,850,11),(6,12,11,10,750,9),
+(7,58,11,8,650,8),(8,11,69,6,950,12);
+
+DROP TEMPORARY TABLE IF EXISTS demo_numbers;
+CREATE TEMPORARY TABLE demo_numbers (n INT PRIMARY KEY);
+INSERT INTO demo_numbers VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),
+(13),(14),(15),(16),(17),(18),(19),(20),(21),(22),(23),(24),(25),(26),(27),(28),(29),(30),
+(31),(32),(33),(34),(35),(36),(37),(38),(39),(40);
+
+DROP TEMPORARY TABLE IF EXISTS demo_fleet;
+CREATE TEMPORARY TABLE demo_fleet AS
+SELECT r.route_code, r.source_id, r.destination_id, r.base_fare, r.travel_hours,
+       n.n AS service_no,
+       CONCAT('DEMO41-',LPAD(r.route_code,2,'0'),'-',LPAD(n.n,2,'0')) AS demo_number,
+       CASE MOD((r.route_code-1)*12+n.n-1,12)
+         WHEN 0 THEN 'Parveen Travels' WHEN 1 THEN 'SRM Travels'
+         WHEN 2 THEN 'IntrCity SmartBus' WHEN 3 THEN 'zingbus'
+         WHEN 4 THEN 'Sri Kumar Travels' WHEN 5 THEN 'KPN Travels'
+         WHEN 6 THEN 'YBM Travels' WHEN 7 THEN 'Orange Tours and Travels'
+         WHEN 8 THEN 'Sri SMS Travels' WHEN 9 THEN 'National Travels'
+         WHEN 10 THEN 'TNSTC' ELSE 'SETC' END AS operator_name,
+       CASE MOD(n.n,3) WHEN 0 THEN 'AC Sleeper' WHEN 1 THEN 'AC Seater' ELSE 'Non-AC Seater' END AS bus_type,
+       CASE MOD(n.n,3) WHEN 0 THEN 36 WHEN 1 THEN 36 ELSE 30 END AS seat_count,
+       MAKETIME(18 + MOD(n.n-1,5), MOD(FLOOR((n.n-1)/5),4)*15, 0) AS departure_time
+FROM demo_routes r JOIN demo_numbers n ON n.n <= r.target_count;
+
+-- Stop here if these counts or city names are unexpected. Expected fleet count: 70.
+SELECT route_code, COUNT(*) AS fleet_count FROM demo_fleet GROUP BY route_code ORDER BY route_code;
+SELECT COUNT(*) AS expected_new_buses FROM demo_fleet;
+
+START TRANSACTION;
+-- Create only the eight required routes if absent. Existing routes and city records are preserved.
+INSERT INTO route (source_city_id,destination_city_id,distance_km,status)
+SELECT dr.source_id,dr.destination_id,NULL,'ACTIVE'
+FROM demo_routes dr LEFT JOIN route r ON r.source_city_id=dr.source_id AND r.destination_city_id=dr.destination_id
+WHERE r.route_id IS NULL;
+
+-- New unique demo bus IDs; reruns do not duplicate them.
+INSERT INTO bus (bus_number,bus_name,bus_type,total_seats,status)
+SELECT f.demo_number,f.operator_name,f.bus_type,f.seat_count,'ACTIVE'
+FROM demo_fleet f LEFT JOIN bus b ON b.bus_number=f.demo_number
+WHERE b.bus_id IS NULL;
+
+-- Re-enable demo buses on rerun; retire ONLY the 30 verified original demonstration IDs.
+UPDATE bus SET status='ACTIVE' WHERE bus_number LIKE 'DEMO41-%';
+UPDATE bus SET status='INACTIVE' WHERE bus_id BETWEEN 1 AND 30 AND bus_number NOT LIKE 'DEMO41-%';
+
+-- 1+2-friendly numbering: 01A (single), 01B/01C (pair), 02A, 02B/02C, ...
+-- Existing seat-selection UI may still arrange these as its current 2+2 grid;
+-- Session 7 will render the actual 1+2 structure. Seat IDs and booking logic remain valid.
+INSERT INTO seat (bus_id,seat_number,seat_type,status)
+SELECT b.bus_id,
+       CONCAT(LPAD(FLOOR((n.n-1)/3)+1,2,'0'),CHAR(65+MOD(n.n-1,3))),
+       'REGULAR','ACTIVE'
+FROM demo_fleet f JOIN bus b ON b.bus_number=f.demo_number
+JOIN demo_numbers n ON n.n <= f.seat_count
+LEFT JOIN seat existing ON existing.bus_id=b.bus_id
+ AND existing.seat_number=CONCAT(LPAD(FLOOR((n.n-1)/3)+1,2,'0'),CHAR(65+MOD(n.n-1,3)))
+WHERE existing.seat_id IS NULL;
+
+-- 30 days, today inclusive. Each demo physical bus has at most one service per day.
+-- Demo arrival_time is a clock time (the existing schema has no arrival_date).
+INSERT INTO bus_schedule (bus_id,route_id,travel_date,departure_time,arrival_time,fare,status)
+SELECT b.bus_id,r.route_id,DATE_ADD(CURDATE(),INTERVAL (d.n-1) DAY),
+       f.departure_time,
+       SEC_TO_TIME(MOD(TIME_TO_SEC(f.departure_time)+f.travel_hours*3600,86400)),
+       f.base_fare + MOD(f.service_no-1,4)*75 + MOD(d.n-1,3)*25,
+       'SCHEDULED'
+FROM demo_fleet f JOIN bus b ON b.bus_number=f.demo_number
+JOIN route r ON r.source_city_id=f.source_id AND r.destination_city_id=f.destination_id
+JOIN demo_numbers d ON d.n<=30
+WHERE NOT EXISTS (
+ SELECT 1 FROM bus_schedule bs WHERE bs.bus_id=b.bus_id
+ AND bs.travel_date=DATE_ADD(CURDATE(),INTERVAL (d.n-1) DAY)
+);
+COMMIT;
+
+-- Verification (expected new fleet 70; 2,100 demo schedules for the 30-day window).
+SELECT COUNT(*) AS demo_buses FROM bus WHERE bus_number LIKE 'DEMO41-%';
+SELECT COUNT(*) AS demo_seats FROM seat s JOIN bus b ON b.bus_id=s.bus_id WHERE b.bus_number LIKE 'DEMO41-%';
+SELECT COUNT(*) AS demo_schedules FROM bus_schedule bs JOIN bus b ON b.bus_id=bs.bus_id
+WHERE b.bus_number LIKE 'DEMO41-%' AND bs.travel_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(),INTERVAL 29 DAY);
+SELECT src.city_name AS source_city,dst.city_name AS destination_city,bs.travel_date,
+       COUNT(*) AS scheduled_buses
+FROM bus_schedule bs JOIN bus b ON b.bus_id=bs.bus_id JOIN route r ON r.route_id=bs.route_id
+JOIN city src ON src.city_id=r.source_city_id JOIN city dst ON dst.city_id=r.destination_city_id
+WHERE b.bus_number LIKE 'DEMO41-%' AND bs.travel_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(),INTERVAL 29 DAY)
+GROUP BY src.city_name,dst.city_name,bs.travel_date ORDER BY bs.travel_date,src.city_name,dst.city_name;
+SELECT COUNT(*) AS retained_bookings FROM booking;
+SELECT COUNT(*) AS retained_booking_passengers FROM booking_passenger;
+
+
+-- =========================================================
+-- SECTION 8: DEMO-FLEET VERIFICATION AND DIAGNOSTICS
+-- =========================================================
+SELECT COUNT(*) AS demo_buses
+FROM bus
+WHERE bus_number LIKE 'DEMO41-%';
+
+SELECT COUNT(*) AS demo_schedules
+FROM bus_schedule bs
+JOIN bus b ON b.bus_id = bs.bus_id
+WHERE b.bus_number LIKE 'DEMO41-%'
+AND bs.travel_date BETWEEN CURDATE()
+AND DATE_ADD(CURDATE(), INTERVAL 29 DAY);
+
+SELECT COUNT(*) AS retained_bookings
+FROM booking;
+
+SELECT COUNT(*) AS retained_passengers
+FROM booking_passenger;
+
+
+
+-- Validate city IDs used by the demo migration
+SELECT city_id, city_name
+FROM city
+WHERE city_id IN (11,12,58,69,97,141,147)
+ORDER BY city_id;
+
+
+
+DROP TEMPORARY TABLE IF EXISTS demo_routes;
+
+CREATE TEMPORARY TABLE demo_routes (
+ route_code INT PRIMARY KEY,
+ source_id INT NOT NULL,
+ destination_id INT NOT NULL,
+ target_count INT NOT NULL,
+ base_fare DECIMAL(10,2) NOT NULL,
+ travel_hours INT NOT NULL
+);
+
+INSERT INTO demo_routes VALUES
+(1,11,12,12,750,9),
+(2,11,58,10,650,8),
+(3,11,141,8,420,6),
+(4,11,97,8,390,6),
+(5,11,147,8,850,11),
+(6,12,11,10,750,9),
+(7,58,11,8,650,8),
+(8,11,69,6,950,12);
+
+SELECT SUM(target_count) AS expected_new_buses
+FROM demo_routes;
+
+
+SELECT bus_id, bus_number, bus_name, status
+FROM bus
+WHERE bus_id BETWEEN 1 AND 30
+ORDER BY bus_id;
+
+
+SELECT
+    seat_id,
+    bus_id,
+    seat_number
+FROM seat
+ORDER BY bus_id, seat_id
+LIMIT 40;
+
+SELECT
+    bus_id,
+    bus_name,
+    bus_type,
+    total_seats
+FROM bus
+WHERE bus_id = 36;
+
+
+-- =========================================================
+-- SECTION 9: ONE-TIME SCHEMA MIGRATIONS AND FARE UPDATES
+-- The two fare columns already exist in your database (Error 1060 confirmed).
+-- Keep this migration as a reference, but do not execute it again.
+-- ALTER TABLE bus_schedule
+-- ADD COLUMN upper_deck_fare DECIMAL(10,2) NULL,
+-- ADD COLUMN lower_deck_fare DECIMAL(10,2) NULL;
+
+UPDATE bus_schedule
+SET
+    upper_deck_fare = 1000.00,
+    lower_deck_fare = 850.00
+WHERE bus_id = 36;
+
+SELECT
+    schedule_id,
+    bus_id,
+    fare,
+    upper_deck_fare,
+    lower_deck_fare
+FROM bus_schedule
+WHERE bus_id = 36;
+
+UPDATE bus_schedule
+SET
+    fare = 850.00,
+    upper_deck_fare = 850.00,
+    lower_deck_fare = 1000.00
+WHERE bus_id = 36;
+
+
+SELECT
+    schedule_id,
+    bus_id,
+    fare,
+    upper_deck_fare,
+    lower_deck_fare
+FROM bus_schedule
+WHERE bus_id = 36;
+
+SHOW CREATE TABLE bus;
+
+SHOW CREATE TABLE seat;
+
+SHOW CREATE TABLE bus_schedule;
+
+SHOW CREATE TABLE booking;
+
+SHOW CREATE TABLE booking_passenger;
+
+
+DESCRIBE seat;
+DESCRIBE bus_schedule;
+-- This rename has already succeeded: DESCRIBE seat shows column `row`.
+-- Do not rerun this migration unless the column is renamed back.
+-- ALTER TABLE `seat`
+-- RENAME COLUMN `row_number` TO `row`;
+
+
